@@ -48,11 +48,11 @@ def sdCalculation (dailyReturns, lagSD):
         Out[i]=np.std(dailyReturns[i:i+lagSD],ddof=1)
     return np.append(np.repeat(np.nan, dif),Out)
 
-def hybrid_transformer_database(data, timestep, xdata, ydata, lag, lagSD, test_size): 
+def hybrid_transformer_database(data, timestep, lag, lagSD, test_size, purge_size): 
     return_data = pd.DataFrame(index = data.index)
     for col in data.columns: 
         return_data[col + '_lag_return'] = returnCalculation(data[col], lag)
-        return_data[col + '_lag_sd'] = sdCalculation(data[col], 5) 
+        return_data[col + '_lag_sd'] = sdCalculation(data[col], lagSD) 
         return_data[col + '_true_return'] = returnCalculation(data[col], 1) 
     return_data.dropna(inplace = True)
 
@@ -71,8 +71,11 @@ def hybrid_transformer_database(data, timestep, xdata, ydata, lag, lagSD, test_s
     for i in range(sample): 
         xdataTrainScaledRNN[i, :, :] = scaled_xdata[i:(timestep + i)]
     
-    xtrain, xtest, ytrain, ytest = train_test_split(xdataTrainScaledRNN, ydataTrainRNN)
+    xtrain, xtest, ytrain, ytest = train_test_split(xdataTrainScaledRNN, ydataTrainRNN, test_size = test_size)
 
+    xtrain = xtrain[:-purge_size, :, :]
+    ytrain = ytrain[:-purge_size, :]
+    
     return (
         tf.convert_to_tensor(xtrain, np.float32), 
         tf.convert_to_tensor(xtest, np.float32), 
