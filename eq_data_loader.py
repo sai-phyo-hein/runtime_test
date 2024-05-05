@@ -11,15 +11,15 @@ def get_eq_data(corr_thresh):
 
     return: DataFrame 
     """
-    config = json.load(open('/workspaces/runtime_test/data_config.json', 'r'))
+    data_config = json.load(open('/workspaces/runtime_test/data_config.json', 'r'))
     nf_50_tickers_df = pd.read_csv('/workspaces/runtime_test/nifty_50_metadata.csv')[['Industry', 'Symbol']]
     nf_50_tickers_df.Symbol = nf_50_tickers_df.Symbol + '.NS'
     nf_50_tickers = nf_50_tickers_df.Symbol.tolist() 
 
     data = yf.download(
         nf_50_tickers, 
-        start = config['data_start_date'],
-        end = config['data_end_date']
+        start = data_config['data_start_date'],
+        end = data_config['data_end_date']
     )['Adj Close'].dropna(axis = 1)
 
     corr = data.corr() 
@@ -27,7 +27,7 @@ def get_eq_data(corr_thresh):
     corr_lt_thresh.dropna(thresh = 6, axis = 0, inplace = True)
     corr_lt_thresh.dropna(thresh = 6, axis = 1, inplace = True)
 
-    return corr_lt_thresh
+    return data[corr_lt_thresh.columns]
 
 if __name__ == '__main__': 
     pass
