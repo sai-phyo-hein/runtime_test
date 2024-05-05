@@ -37,7 +37,7 @@ def sdCalculation (dailyReturns, lagSD):
     -----------------------------------------------
     Input: 
         database (array/pandas.Series) : price data 
-        lag (int) : lag for std calculation
+        lagSD (int) : lag for std calculation
     
     Returns: 
         array : 
@@ -49,6 +49,21 @@ def sdCalculation (dailyReturns, lagSD):
     return np.append(np.repeat(np.nan, dif),Out)
 
 def hybrid_transformer_database(data, timestep, lag, lagSD, test_size, purge_size): 
+    """
+    Function for preparing train and test data for hybrid transformer model.
+    -----------------------------------------------
+    Input: 
+        data (dataframe) : price data 
+        timestep (int) : sequential timestep for inputing to transformer model
+        lag (int) : lag for return calculation
+        lagSD (int) : lag for std calculation
+        test_size (float) : test data size (fraction value)
+        purge_size (int) : # of data points to purge from train data for preventing leakage
+
+    Returns: 
+        xtrain (tensor), xtest (tensor), ytrain (tensor), ytest (tensor)
+
+    """
     return_data = pd.DataFrame(index = data.index)
     for col in data.columns: 
         return_data[col + '_lag_return'] = returnCalculation(data[col], lag)
@@ -75,7 +90,7 @@ def hybrid_transformer_database(data, timestep, lag, lagSD, test_size, purge_siz
 
     xtrain = xtrain[:-purge_size, :, :]
     ytrain = ytrain[:-purge_size, :]
-    
+
     return (
         tf.convert_to_tensor(xtrain, np.float32), 
         tf.convert_to_tensor(xtest, np.float32), 
