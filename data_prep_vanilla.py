@@ -7,6 +7,7 @@ import tensorflow as tf
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+import math
 
 data_config = json.load(open('/workspaces/runtime_test/data_config.json', 'r'))
 
@@ -48,7 +49,14 @@ def sdCalculation (dailyReturns, lagSD):
         Out[i]=np.std(dailyReturns[i:i+lagSD],ddof=1)
     return np.append(np.repeat(np.nan, dif),Out)
 
-def hybrid_transformer_database(data, timestep, lag, lagSD, test_size, purge_size): 
+def position_encoding_init(n_position, d_pos_vec):
+    position_enc = np.array([
+        [math.pi*(pos/(n_position-1)) for i in range(d_pos_vec)]
+        if pos != 0 else np.zeros(d_pos_vec) for pos in range(n_position)])
+    return np.cos(position_enc)
+
+
+def vanilla_transformer_database(data, timestep, lag, lagSD, test_size, purge_size): 
     """
     Function for preparing train and test data for hybrid transformer model.
     -----------------------------------------------
@@ -83,8 +91,11 @@ def hybrid_transformer_database(data, timestep, lag, lagSD, test_size, purge_siz
 
     xdataTrainScaledRNN = np.zeros([sample, timestep, features]) 
     ydataTrainRNN = ydata.iloc[timestep - 1:, :]
+
+    # adding positional encoding
+    pos_encoding = position_encoding_init(timestep, xdata.shape[1])
     for i in range(sample): 
-        xdataTrainScaledRNN[i, :, :] = scaled_xdata[i:(timestep + i)]
+        xdataTrainScaledRNN[i, :, :] = scaled_xdata[i:(timestep + i)] + pos_encoding
     
     xtrain, xtest, ytrain, ytest = train_test_split(xdataTrainScaledRNN, ydataTrainRNN, test_size = test_size)
 
