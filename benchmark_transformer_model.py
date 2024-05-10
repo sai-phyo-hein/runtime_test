@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-###MultiHeadSelfAttention
+
 ###MultiHeadSelfAttention
 class MultiHeadSelfAttention(tf.keras.layers.Layer):
     def __init__(self, embed_dim, num_heads = 8):
@@ -39,6 +39,7 @@ class MultiHeadSelfAttention(tf.keras.layers.Layer):
         concat_attention = tf.reshape(attention, (batch_size, -1, self.embed_dim))  # (batch_size, seq_len, embed_dim)
         output = self.combine_heads(concat_attention)  # (batch_size, seq_len, embed_dim)
         return output
+    
 
 ###Transformer Keras Block
 class TransformerBlock(tf.keras.layers.Layer):
@@ -50,12 +51,12 @@ class TransformerBlock(tf.keras.layers.Layer):
         self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon = 1e-6)
         self.dropout1 = tf.keras.layers.Dropout(rate)
         self.dropout2 = tf.keras.layers.Dropout(rate)
-    def call(self, inputs):
+    def call(self, inputs, training):
         attn_output = self.att(inputs)
-        attn_output = self.dropout1(attn_output)
+        attn_output = self.dropout1(attn_output, training = training)
         out1 = self.layernorm1(inputs + attn_output)
         ffn_output = self.ffn(out1)
-        ffn_output = self.dropout2(ffn_output)
+        ffn_output = self.dropout2(ffn_output, training = training)
         return self.layernorm2(out1 + ffn_output)
 
 
@@ -91,10 +92,11 @@ class HybridTransformer_Portfolio(tf.keras.layers.Layer):
         #Model Structure is defined
         Input = tf.keras.Input(shape = (self.shape1, self.shape2), name = 'Input')
         #LSTM is applied on top of the transformer
-        X = tf.keras.layers.LSTM(units = 16, dropout = self.dropout, return_sequences = True)(Input)
+        #Pos_Encoding is Used for Vanilla Transformer
+        #X = tf.keras.layers.LSTM(units = 16, dropout = Dropout, return_sequences = True)(Input)
         #Transformer architecture is implemented
-        transformer_block_1 = TransformerBlock(embed_dim = 16, num_heads=self.headsAttention, ff_dim = 8, rate = self.dropout, )
-        X = transformer_block_1(X)
+        transformer_block_1 = TransformerBlock(embed_dim = 24, num_heads=self.headsAttention, ff_dim = 8, rate = self.dropout, )
+        X = transformer_block_1(Input)
 
         #Dense layers are used
         X = tf.keras.layers.GlobalAveragePooling1D()(X)
@@ -115,8 +117,6 @@ class HybridTransformer_Portfolio(tf.keras.layers.Layer):
         #Configuring Custom Loss Funciton with Mean Sharpe Ratio
         def sharpe_loss(_, y_pred):
             data = tf.divide(self.priceData, self.priceData[0])
-            if y_pred.shape[0] == None: 
-                y_pred = tf.zeros((1,1))
             y_pred = tf.unstack(y_pred)
             sharpes = tf.zeros((1,1))
             for y in y_pred:
@@ -130,11 +130,9 @@ class HybridTransformer_Portfolio(tf.keras.layers.Layer):
         model.compile(optimizer=Opt, loss= sharpe_loss)
         return model
 
-    def allocation_hybrid(self, xtrainRNN, ytrainRNN, Epochs, BatchSize):
+    def allocation_vanilla(self, xtrainRNN, ytrainRNN, Epochs, BatchSize):
         if self.model == None:
             self.model = self.Transformer_Model()
             self.model.fit(xtrainRNN, ytrainRNN, epochs = Epochs, verbose = 0, batch_size = BatchSize)
             return self.model.predict(xtrainRNN)
 
-if __name__ == '__main__': 
-    pass
