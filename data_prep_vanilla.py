@@ -1,4 +1,3 @@
-from eq_data_loader import get_eq_data
 import json
 import pandas as pd
 
