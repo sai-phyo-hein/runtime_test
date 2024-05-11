@@ -27,8 +27,8 @@ def get_eq_data(data_path, start, end, corr_thresh, market_cap_filter):
     corr_lt_thresh = corr[corr < corr_thresh]
     corr_lt_thresh.dropna(thresh = corr.shape[1], axis = 1, inplace = True)
 
-    selected_tickers = nifty_50[
-        nf_50_tickers_df.Symbol.isin(corr.columns)
+    selected_tickers = nf_50_tickers_df[
+        nf_50_tickers_df.Symbol.isin(corr_lt_thresh.columns)
     ].sort_values(
         'market_cap', ascending = False
     ).groupby('Industry').head(market_cap_filter).Symbol.unique().tolist()
