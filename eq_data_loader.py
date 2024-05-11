@@ -13,10 +13,10 @@ def get_eq_data(data_path, start, end, corr_thresh, market_cap_filter):
     """
     nf_50_tickers_df = pd.read_csv(data_path)[['Industry', 'Symbol']]
     nf_50_tickers_df.Symbol = nf_50_tickers_df.Symbol + '.NS'
-    nifty_50['market_cap'] = [yf.Ticker(tick).get_info()['marketCap'] for tick in nifty_50.Symbol]
+    nf_50_tickers_df['market_cap'] = [yf.Ticker(tick).get_info()['marketCap'] for tick in nf_50_tickers_df.Symbol]
 
     data = yf.download(
-        nifty_50.Symbol.tolist(), 
+        nf_50_tickers_df.Symbol.tolist(), 
         start = start, 
         end = end, 
     )['Adj Close'].dropna(axis = 1)
@@ -28,7 +28,7 @@ def get_eq_data(data_path, start, end, corr_thresh, market_cap_filter):
     corr_lt_thresh.dropna(thresh = corr.shape[1], axis = 1, inplace = True)
 
     selected_tickers = nifty_50[
-        nifty_50.Symbol.isin(corr.columns)
+        nf_50_tickers_df.Symbol.isin(corr.columns)
     ].sort_values(
         'market_cap', ascending = False
     ).groupby('Industry').head(market_cap_filter).Symbol.unique().tolist()
