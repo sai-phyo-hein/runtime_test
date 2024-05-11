@@ -1,4 +1,3 @@
-from eq_data_loader import get_eq_data
 import json
 import pandas as pd
 
@@ -7,10 +6,6 @@ import tensorflow as tf
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-
-data_config = json.load(open('/workspaces/runtime_test/data_config.json', 'r'))
-
-data = get_eq_data(data_config['correlation_thresh'])
 
 #Return calculation
 def returnCalculation (database,lag):

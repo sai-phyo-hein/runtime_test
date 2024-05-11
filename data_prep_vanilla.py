@@ -9,10 +9,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 import math
 
-data_config = json.load(open('/workspaces/runtime_test/data_config.json', 'r'))
-
-data = get_eq_data(data_config['correlation_thresh'])
-
 #Return calculation
 def returnCalculation (database,lag):
     """
