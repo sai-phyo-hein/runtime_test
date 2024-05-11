@@ -3,7 +3,7 @@ import pandas as pd
 import yfinance as yf
 import json
 
-def get_eq_data(corr_thresh):
+def get_eq_data(data_path, start, end, corr_thresh, market_cap_filter):
     """
     A function that select the equities out of nifty50 based on these criteria: 
         - equity is traded during selected date range and no blank
@@ -11,23 +11,29 @@ def get_eq_data(corr_thresh):
 
     return: DataFrame 
     """
-    data_config = json.load(open('/workspaces/runtime_test/data_config.json', 'r'))
-    nf_50_tickers_df = pd.read_csv('/workspaces/runtime_test/nifty_50_metadata.csv')[['Industry', 'Symbol']]
+    nf_50_tickers_df = pd.read_csv(data_path)[['Industry', 'Symbol']]
     nf_50_tickers_df.Symbol = nf_50_tickers_df.Symbol + '.NS'
-    nf_50_tickers = nf_50_tickers_df.Symbol.tolist() 
+    nifty_50['market_cap'] = [yf.Ticker(tick).get_info()['marketCap'] for tick in nifty_50.Symbol]
 
     data = yf.download(
-        nf_50_tickers, 
-        start = data_config['data_start_date'],
-        end = data_config['data_end_date']
+        nifty_50.Symbol.tolist(), 
+        start = start, 
+        end = end, 
     )['Adj Close'].dropna(axis = 1)
 
-    corr = data.corr() 
+    corr = data.pct_change().dropna(axis = 0).corr() 
+    for i in range(corr.shape[0]): 
+        corr.iloc[i, i] = 0.0
     corr_lt_thresh = corr[corr < corr_thresh]
-    corr_lt_thresh.dropna(thresh = 6, axis = 0, inplace = True)
-    corr_lt_thresh.dropna(thresh = 6, axis = 1, inplace = True)
+    corr_lt_thresh.dropna(thresh = corr.shape[1], axis = 1, inplace = True)
 
-    return data[corr_lt_thresh.columns]
+    selected_tickers = nifty_50[
+        nifty_50.Symbol.isin(corr.columns)
+    ].sort_values(
+        'market_cap', ascending = False
+    ).groupby('Industry').head(market_cap_filter).Symbol.unique().tolist()
+
+    return data[selected_tickers]
 
 if __name__ == '__main__': 
     pass
