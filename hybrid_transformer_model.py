@@ -91,7 +91,7 @@ class HybridTransformer_Portfolio(tf.keras.layers.Layer):
         #Model Structure is defined
         Input = tf.keras.Input(shape = (self.shape1, self.shape2), name = 'Input')
         #LSTM is applied on top of the transformer
-        X = tf.keras.layers.LSTM(units = 16, dropout = self.dropout, return_sequences = True)(Input)
+        X = tf.keras.layers.LSTM(units = 16, dropout = Dropout, return_sequences = True)(Input)
         #Transformer architecture is implemented
         transformer_block_1 = TransformerBlock(embed_dim = 16, num_heads=self.headsAttention, ff_dim = 8, rate = self.dropout, )
         X = transformer_block_1(X)
@@ -99,7 +99,7 @@ class HybridTransformer_Portfolio(tf.keras.layers.Layer):
         #Dense layers are used
         X = tf.keras.layers.GlobalAveragePooling1D()(X)
         X = tf.keras.layers.Dense(8, activation=tf.nn.sigmoid)(X)
-        X = tf.keras.layers.Dropout(self.dropout)(X)
+        X = tf.keras.layers.Dropout(Dropout)(X)
         Output = tf.keras.layers.Dense(self.outputShape, activation=tf.nn.softmax, name="Output")(X)
 
         # scaling for the constraints sum = 1
@@ -110,13 +110,11 @@ class HybridTransformer_Portfolio(tf.keras.layers.Layer):
 
         model = tf.keras.Model(inputs=Input, outputs=Output)
         #Optimizer is defined
-        Opt = tf.keras.optimizers.Adam(learning_rate=self.learningRate, beta_1=0.9, beta_2=0.999, epsilon=1e-07, amsgrad=False,name='Adam')
+        Opt = tf.keras.optimizers.Adam(learning_rate=LearningRate, beta_1=0.9, beta_2=0.999, epsilon=1e-07, amsgrad=False,name='Adam')
 
         #Configuring Custom Loss Funciton with Mean Sharpe Ratio
         def sharpe_loss(_, y_pred):
             data = tf.divide(self.priceData, self.priceData[0])
-            if y_pred.shape[0] == None: 
-                y_pred = tf.zeros((1,1))
             y_pred = tf.unstack(y_pred)
             sharpes = tf.zeros((1,1))
             for y in y_pred:
