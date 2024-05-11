@@ -1,7 +1,6 @@
 import tensorflow as tf
 
 ###MultiHeadSelfAttention
-###MultiHeadSelfAttention
 class MultiHeadSelfAttention(tf.keras.layers.Layer):
     def __init__(self, embed_dim, num_heads = 8):
         super(MultiHeadSelfAttention, self).__init__()
@@ -72,24 +71,10 @@ class HybridTransformer_Portfolio(tf.keras.layers.Layer):
         self.ub = ub
         self.lb = lb
 
-    def rebalance(self, weight, lb, ub):
-        old = weight
-        weight_clamped = tf.clip_by_value(old, lb, ub)
-        while True:
-            leftover = (old - weight_clamped).sum().item()
-            nominees = weight_clamped[tf.where(weight_clamped != ub)[0]]
-            gift = leftover * (nominees / nominees.sum())
-            weight_clamped[tf.where(weight_clamped != ub)[0]] += gift
-            old = weight_clamped
-            if len(tf.where(weight_clamped > ub)[0]) ==0:
-                break
-            else:
-                weight_clamped = tf.clip_by_value(old, lb, ub)
-
-
     def Transformer_Model(self):
         #Model Structure is defined
         Input = tf.keras.Input(shape = (self.shape1, self.shape2), name = 'Input')
+        print(Input.shape)
         #LSTM is applied on top of the transformer
         X = tf.keras.layers.LSTM(units = 16, dropout = self.dropout, return_sequences = True)(Input)
         #Transformer architecture is implemented
@@ -106,14 +91,15 @@ class HybridTransformer_Portfolio(tf.keras.layers.Layer):
         Output = tf.math.divide(Output, tf.reduce_sum(Output, axis = 1, keepdims=True))
 
         # clip the output for addressing weight bounds
-        Output = tf.clip_by_value(Output, clip_value_min = self.lb, clip_value_max = self.ub)
-
+        #Output = tf.clip_by_value(Output, clip_value_min = self.lb, clip_value_max = self.ub)
+        print(Output.shape)
         model = tf.keras.Model(inputs=Input, outputs=Output)
         #Optimizer is defined
         Opt = tf.keras.optimizers.Adam(learning_rate=self.learningRate, beta_1=0.9, beta_2=0.999, epsilon=1e-07, amsgrad=False,name='Adam')
 
         #Configuring Custom Loss Funciton with Mean Sharpe Ratio
         def sharpe_loss(_, y_pred):
+            print(y_pred.shape)
             data = tf.divide(self.priceData, self.priceData[0])
             y_pred = tf.unstack(y_pred)
             sharpes = tf.zeros((1,1))
@@ -128,11 +114,17 @@ class HybridTransformer_Portfolio(tf.keras.layers.Layer):
         model.compile(optimizer=Opt, loss= sharpe_loss)
         return model
 
-    def allocation_hybrid(self, xtrainRNN, ytrainRNN, Epochs, BatchSize):
+    def allocation_hybrid_train(self, xtrainRNN, ytrainRNN, Epochs, BatchSize):
         if self.model == None:
             self.model = self.Transformer_Model()
             self.model.fit(xtrainRNN, ytrainRNN, epochs = Epochs, verbose = 0, batch_size = BatchSize)
             return self.model.predict(xtrainRNN)
+    
+    def allocation_hybrid_test(self, xtestRNN):
+            if self.model == None: 
+                print('Model is not trained.')
+            else: 
+                return self.model.predict(xtestRNN)
 
 if __name__ == '__main__': 
     pass
