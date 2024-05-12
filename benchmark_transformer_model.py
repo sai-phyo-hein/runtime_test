@@ -108,7 +108,7 @@ class HybridTransformer_Portfolio(tf.keras.layers.Layer):
         Output = tf.math.divide(Output, tf.reduce_sum(Output, axis = 1, keepdims=True))
 
         # clip the output for addressing weight bounds
-        Output = tf.clip_by_value(Output, clip_value_min = self.lb, clip_value_max = self.ub)
+        #Output = tf.clip_by_value(Output, clip_value_min = self.lb, clip_value_max = self.ub)
 
         model = tf.keras.Model(inputs=Input, outputs=Output)
         #Optimizer is defined
@@ -130,9 +130,15 @@ class HybridTransformer_Portfolio(tf.keras.layers.Layer):
         model.compile(optimizer=Opt, loss= sharpe_loss)
         return model
 
-    def allocation_vanilla(self, xtrainRNN, ytrainRNN, Epochs, BatchSize):
+    def allocation_vanilla_train(self, xtrainRNN, ytrainRNN, Epochs, BatchSize):
         if self.model == None:
             self.model = self.Transformer_Model()
             self.model.fit(xtrainRNN, ytrainRNN, epochs = Epochs, verbose = 0, batch_size = BatchSize)
             return self.model.predict(xtrainRNN)
+    
+    def allocation_vanilla_test(self, xtestRNN):
+            if self.model == None: 
+                print('Model is not trained.')
+            else: 
+                return self.model.predict(xtestRNN)
 
