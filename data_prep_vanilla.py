@@ -92,7 +92,7 @@ def vanilla_transformer_database(data, timestep, lag, lagSD, test_size, purge_si
     for i in range(sample): 
         xdataTrainScaledRNN[i, :, :] = scaled_xdata[i:(timestep + i)] + pos_encoding
     
-    xtrain, xtest, ytrain, ytest = train_test_split(xdataTrainScaledRNN, ydataTrainRNN, test_size = test_size)
+    xtrain, xtest, ytrain, ytest = train_test_split(xdataTrainScaledRNN, ydataTrainRNN, test_size = test_size, shuffle = False)
 
     xtrain = xtrain[:-purge_size, :, :]
     ytrain = ytrain.iloc[:-purge_size, :]
