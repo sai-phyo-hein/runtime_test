@@ -74,7 +74,6 @@ class HybridTransformer_Portfolio(tf.keras.layers.Layer):
     def Transformer_Model(self):
         #Model Structure is defined
         Input = tf.keras.Input(shape = (self.shape1, self.shape2), name = 'Input')
-        print(Input.shape)
         #LSTM is applied on top of the transformer
         X = tf.keras.layers.LSTM(units = 16, dropout = self.dropout, return_sequences = True)(Input)
         #Transformer architecture is implemented
@@ -92,14 +91,12 @@ class HybridTransformer_Portfolio(tf.keras.layers.Layer):
 
         # clip the output for addressing weight bounds
         #Output = tf.clip_by_value(Output, clip_value_min = self.lb, clip_value_max = self.ub)
-        print(Output.shape)
         model = tf.keras.Model(inputs=Input, outputs=Output)
         #Optimizer is defined
         Opt = tf.keras.optimizers.Adam(learning_rate=self.learningRate, beta_1=0.9, beta_2=0.999, epsilon=1e-07, amsgrad=False,name='Adam')
 
         #Configuring Custom Loss Funciton with Mean Sharpe Ratio
         def sharpe_loss(_, y_pred):
-            print(y_pred.shape)
             data = tf.divide(self.priceData, self.priceData[0])
             y_pred = tf.unstack(y_pred)
             sharpes = tf.zeros((1,1))
