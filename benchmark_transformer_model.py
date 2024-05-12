@@ -60,7 +60,7 @@ class TransformerBlock(tf.keras.layers.Layer):
         return self.layernorm2(out1 + ffn_output)
 
 
-class HybridTransformer_Portfolio(tf.keras.layers.Layer):
+class Transformer_Portfolio(tf.keras.layers.Layer):
     def __init__(self, shape1, shape2, outputShape, headsAttention, dropout, learningRate, priceData, ub, lb):
         self.shape1 = shape1
         self.shape2 = shape2
