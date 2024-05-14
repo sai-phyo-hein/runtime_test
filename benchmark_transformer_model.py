@@ -120,7 +120,7 @@ class Transformer_Portfolio(tf.keras.layers.Layer):
             y_pred = tf.unstack(y_pred)
             sharpes = tf.zeros((1,1))
             for y in y_pred:
-                portfolio_values = tf.reduce_sum(tf.multiply(data, y) - 0.01, axis=1, )
+                portfolio_values = tf.reduce_sum(tf.multiply(data, y) * (1-0.01), axis=1, )
                 portfolio_returns = (portfolio_values[1:] - portfolio_values[:-1]) / portfolio_values[:-1]  # % change formula # assuming 1% transaction fee
                 sharpe = tf.keras.backend.mean(portfolio_returns) / tf.keras.backend.std(portfolio_returns)
                 sharpes = tf.concat((sharpes, tf.reshape(sharpe, (1, -1))), axis = 0)
