@@ -101,11 +101,11 @@ class Transformer_Portfolio(tf.keras.layers.Layer):
 
         #Configuring Custom Loss Funciton with Mean Sharpe Ratio
         def sharpe_loss(_, y_pred):
-            data = tf.divide(self.priceData, self.priceData[0])
+            data = self.priceData
             y_pred = tf.unstack(y_pred)
             sharpes = tf.zeros((1,1))
             for y in y_pred:
-                portfolio_returns = tf.reduce_sum(tf.multiply(data, y.numpy()), axis=1, ) 
+                portfolio_returns = tf.reduce_sum(tf.multiply(data, y), axis=1, ) 
                 sharpe = tf.keras.backend.mean(portfolio_returns) / tf.keras.backend.std(portfolio_returns)
                 sharpes = tf.concat((sharpes, tf.reshape(sharpe, (1, -1))), axis = 0)
             return -tf.keras.backend.mean(sharpes[0][1:])
